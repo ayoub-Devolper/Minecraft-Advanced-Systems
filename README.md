@@ -2,24 +2,25 @@
 A collection of professional-grade systems developed by **Ayoub_200**, focused on scalability, security, and player engagement.
 
 ## 🚀 Key Features & Modules
+### 1. **High-Performance Asynchronous Data Caching System** (`DataCacheController.java`)
 
-### 1. **Hypixel-Style NBT Engine** (`ItemAttributeEngine.java`)
+### 2. **Hypixel-Style NBT Engine** (`ItemAttributeEngine.java`)
 - Advanced metadata-driven item system using `PersistentDataContainer`.
 - Supports persistent hidden stats, rarities, and custom combat attributes.
 
-### 2. **Async Data Synchronization** (`DatabaseManager.java`)
+### 3. **Async Data Synchronization** (`DatabaseManager.java`)
 - High-efficiency MySQL/SQLite bridge.
 - Uses asynchronous threads to prevent main-thread freezing and ensure stable TPS.
 
-### 3. **Network Security Engine** (`SecurityEngine.java`)
+### 4. **Network Security Engine** (`SecurityEngine.java`)
 - Specialized layer to prevent unauthorized access to sensitive commands like `/op` and `/plugins`.
 - Real-time staff logging for unauthorized attempts.
 
-### 4. **Infrastructure Optimization** (`ServerOptimizer.java` & `PerformanceGuard.java`)
+### 5. **Infrastructure Optimization** (`ServerOptimizer.java` & `PerformanceGuard.java`)
 - Automated entity culling and memory garbage collection.
 - Real-time TPS monitoring to ensure lag-free gameplay.
 
-### 5. **Advanced Combat Logic** (`CombatTagManager.java`)
+### 6. **Advanced Combat Logic** (`CombatTagManager.java`)
 - Efficient combat-tracking system using HashMaps.
 - Automated penalties for 'Combat Logging' to maintain competitive integrity.
 
@@ -28,4 +29,3 @@ A collection of professional-grade systems developed by **Ayoub_200**, focused o
 
 ---
 **Developed with Java & Spigot API | Optimized for Large-Scale Networks**
-### 1. **High-Performance Asynchronous Data Caching System** (`DataCacheController.java`)
