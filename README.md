@@ -28,7 +28,7 @@ This repository is a curated migration of my private development environment.
 ---
 
 ### 🛠️ Technical Migration Note
-*This repository has been migrated from my local workspace to GitHub for final audit. Every line of logic has been refined to meet the high standards of professional networks like Ultimis.*
+*This repository has been migrated from my local workspace to GitHub for final audit. Every line of logic has been refined to meet the high standards of professional networks like UltimisMC.ZetrexMC.BlockMC...
 
 # 🛠️ High-Performance Core Systems for Minecraft Networks
 A collection of professional-grade systems developed by **Ayoub_200**, focused on scalability, security, and player engagement.
