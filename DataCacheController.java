@@ -13,12 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DataCacheController {
 
     private final JavaPlugin plugin;
-    // تخزين البيانات في الرام بسرعة فائقة (Thread-Safe)
+    // تخزين البيانات في الرام بسرعة باقصى سرعة (Thread-Safe)
     private final ConcurrentHashMap<UUID, Integer> playerCoinsCache = new ConcurrentHashMap<>();
+    private boolean isReady = false; // علم للتحقق من جاهزية النظام
 
     public DataCacheController(JavaPlugin plugin) {
         this.plugin = plugin;
         startAutoSaveTask();
+        // يمكنك وضع هنا تحقق من جاهزية قاعدة البيانات
+        // مثلا: if (databaseReady()) { isReady = true; }
+        // هنا أضعها مباشرة على true لمثال بسيط
+        this.isReady = true; 
     }
 
     // إضافة بيانات للرام (لا تلمس قاعدة البيانات الآن لضمان السرعة)
@@ -27,28 +32,47 @@ public class DataCacheController {
         playerCoinsCache.put(uuid, playerCoinsCache.getOrDefault(uuid, 0) + amount);
     }
 
-    // الحصول على البيانات من الرام (O(1) Complexity - أسرع شيء في البرمجة)
+    // الحصول على البيانات من الرام
     public int getCoinsFromCache(Player player) {
         return playerCoinsCache.getOrDefault(player.getUniqueId(), 0);
     }
 
-    // نظام الحفظ التلقائي "الذكي" (كل 5 دقائق)
+    // نظام الحفظ التلقائي "الذكي"
     private void startAutoSaveTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+            if (!isReady) {
+                Bukkit.getLogger().warning("[HyperCache] النظام غير جاهز حالياً للحفظ.");
+                return;
+            }
             if (playerCoinsCache.isEmpty()) return;
 
             Bukkit.getLogger().info("[HyperCache] Syncing " + playerCoinsCache.size() + " players to SQL...");
-            
-            // هنا يتم إرسال البيانات لقاعدة البيانات دفعة واحدة (Batch Update)
-            // هذا يحمي السيرفر من اللاغ بنسبة 100%
-            syncToDatabase();
-            
-        }, 6000L, 6000L); // 6000 ticks = 5 minutes
+            boolean success = syncToDatabase();
+
+            if (success) {
+                // بعد نجاح الحفظ، نقوم بمسح الـ cache
+                playerCoinsCache.clear();
+                Bukkit.getLogger().info("[HyperCache] Data cleared after successful save.");
+            } else {
+                Bukkit.getLogger().warning("[HyperCache] فشل في حفظ البيانات، سيتم المحاولة مرة أخرى لاحقًا.");
+            }
+        }, 6000L, 6000L); // 6000 ticks = 5 دقائق
     }
 
-    private void syncToDatabase() {
-        // يتم تفريغ الرام بعد الحفظ لضمان عدم استهلاك الذاكرة
-        // playerCoinsCache.clear(); 
-        Bukkit.getLogger().info("[HyperCache] Data Persistence Completed Successfully.");
+    private boolean syncToDatabase() {
+        try {
+            // هنا تضع الكود الفعلي لتحديث قاعدة البيانات
+            // مثال: تحديث النقاط لكل لاعب دفعة واحدة
+            for (UUID uuid : playerCoinsCache.keySet()) {
+                int coins = playerCoinsCache.get(uuid);
+                // استدعاء دالة لتحديث قاعدة البيانات، مثلا:
+                // database.updatePlayerCoins(uuid, coins);
+            }
+            // إذا نجح كل شيء
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
