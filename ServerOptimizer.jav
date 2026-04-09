@@ -7,20 +7,32 @@ import org.bukkit.entity.Item;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ServerOptimizer extends JavaPlugin {
+
     @Override
     public void onEnable() {
-        // Runs every 5 minutes (6000 ticks)
+        // جدولة المهمة كل 5 دقائق (6000 تكة)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
+            int removedItemsCount = 0;
+
             for (World world : Bukkit.getWorlds()) {
                 for (Entity entity : world.getEntities()) {
                     if (entity instanceof Item) {
+                        // يمكنك إضافة شروط إضافية هنا، مثلاً حذف العناصر القديمة
                         entity.remove();
+                        removedItemsCount++;
                     }
                 }
             }
-            // Calling Garbage Collector to free up System RAM
-            System.gc();
+
+            // سجل عدد العناصر التي تم حذفها
+            Bukkit.getLogger().info("[UltimisOptimizer] " + removedItemsCount + " items removed.");
+
+            // استدعاء الـGarbage Collector بشكل معتدل
+            System.gc(); 
+
+            // إظهار رسالة بعد التنظيف
             Bukkit.getLogger().info("[UltimisOptimizer] Entities cleared and RAM optimized.");
+
         }, 6000L, 6000L);
     }
 }
