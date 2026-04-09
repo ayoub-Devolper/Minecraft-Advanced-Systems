@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,16 +28,20 @@ public class ItemAttributeEngine {
         this.damageKey = new NamespacedKey(plugin, "custom_damage");
     }
 
+    /**
+     * إنشاء سيف بمواصفات خاصة (Hypixel Style)
+     * @return ItemStack السلاح المخصص
+     */
     public ItemStack createHypixelSword() {
         ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
         ItemMeta meta = sword.getItemMeta();
 
         if (meta != null) {
-            // 1. Set Hidden Data (NBT)
+            // 1. تخزين البيانات المخفية
             meta.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, "LEGENDARY");
             meta.getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, 150);
 
-            // 2. Set Visual Representation (Lore)
+            // 2. إعداد الشكل الخارجي (Lore)
             meta.setDisplayName(ChatColor.GOLD + "Hyperion Blade");
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.GRAY + "Damage: " + ChatColor.RED + "+150");
@@ -49,9 +54,23 @@ public class ItemAttributeEngine {
         return sword;
     }
 
-    // Function to read the hidden data from an item (Used in combat)
+    /**
+     * قراءة الضرر المخصص من عنصر معين
+     * @param item العنصر
+     * @return قيمة الضرر
+     */
     public int getCustomDamage(ItemStack item) {
-        if (item == null || item.getItemMeta() == null) return 0;
+        if (item == null || !item.hasItemMeta()) return 0;
         return item.getItemMeta().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, 0);
+    }
+
+    /**
+     * قراءة نوع الندرة من العنصر
+     * @param item العنصر
+     * @return نوع الندرة كـ String
+     */
+    public String getItemRarity(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return "COMMON";
+        return item.getItemMeta().getPersistentDataContainer().getOrDefault(rarityKey, PersistentDataType.STRING, "COMMON");
     }
 }
