@@ -21,64 +21,80 @@ import java.util.UUID;
 public class SentinelShieldPro implements Listener {
 
     private final JavaPlugin plugin;
-    private final HashMap<UUID, Integer> violationFlags = new HashMap<>();
+
+    // نظام تتبع المخالفات مع توقيت إعادة التعيين
+    private final HashMap<UUID, PlayerViolationData> violationDataMap = new HashMap<>();
+    private final int violationThreshold = 3; // عدد المخالفات قبل التنبيه
+    private final long violationResetTime = 60000; // وقت إعادة التقييم بالمللي ثانية (مثلاً 60 ثانية)
 
     public SentinelShieldPro(JavaPlugin plugin) {
         this.plugin = plugin;
-        registerPacketListener(); // تفعيل التجسس على الحزم فور تشغيل الكود
+        registerPacketListener(); // تفعيل مراقبة الحزم عند التشغيل
     }
 
-    // --- الجزء الأول: الكشف عبر الحزم (Packet-Level Detection) ---
-    // أسرع وأخف على السيرفر، يكتشف الهاك قبل معالجة الحركة
+    // --- الجزء الأول: مراقبة الحزم (Packet-Level Detection) ---
     private void registerPacketListener() {
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(plugin,
                 ListenerPriority.NORMAL, PacketType.Play.Client.POSITION, PacketType.Play.Client.POSITION_LOOK) {
             @Override
             public void onPacketReceiving(PacketEvent event) {
                 Player player = event.getPlayer();
-                // هنا نراقب الحزم القادمة من جهاز اللاعب مباشرة
+                // مراقبة حزم الحركة مباشرة من اللاعب
                 double x = event.getPacket().getDoubles().read(0);
                 double z = event.getPacket().getDoubles().read(2);
-                
-                // (منطق متقدم: فحص الـ Packets لكل ثانية لمنع الـ Timer Hack)
+                // هنا يمكنك إضافة منطق متقدم للتحقق من أن الحزم تتوافق مع حركة اللاعب الطبيعي
             }
         });
     }
 
-    // --- الجزء الثاني: الكشف عبر الأحداث (Event-Level Detection) ---
-    // أدق في حساب المسافات الجغرافية داخل العالم
+    // --- الجزء الثاني: كشف عبر أحداث الحركة ---
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
+
+        // استبعاد اللاعبين المسموح لهم بالتجاوز
         if (player.hasPermission("zetrex.bypass.anticheat") || player.isFlying()) return;
 
         Location from = event.getFrom();
         Location to = event.getTo();
+
         if (to == null) return;
 
         double distance = from.distance(to);
 
-        // كشف الـ Speed (إذا تحرك اللاعب أكثر من 0.8 بلوك في تكة واحدة)
+        // كشف حركة غير طبيعية (مثلاً أسرع من 0.8 بلوك)
         if (distance > 0.79) {
-            flagPlayer(player, "Hybrid-Movement-Slight", distance);
+            flagPlayer(player, "Speed-Hack", distance);
         }
     }
 
-    // --- الجزء الثالث: نظام التنبيهات الذكي (Integrated Alert System) ---
+    // --- نظام التنبيهات الذكي ---
     private void flagPlayer(Player player, String hackType, double value) {
         UUID uuid = player.getUniqueId();
-        violationFlags.put(uuid, violationFlags.getOrDefault(uuid, 0) + 1);
+        PlayerViolationData data = violationDataMap.getOrDefault(uuid, new PlayerViolationData());
 
-        if (violationFlags.get(uuid) >= 3) {
+        long currentTime = System.currentTimeMillis();
+
+        // إعادة تعيين العدادات بعد فترة زمنية
+        if (currentTime - data.lastViolationTime > violationResetTime) {
+            data.violationCount = 1; // بدء العد من جديد
+        } else {
+            data.violationCount++;
+        }
+
+        data.lastViolationTime = currentTime;
+        violationDataMap.put(uuid, data);
+
+        if (data.violationCount >= violationThreshold) {
             sendStaffAlert(player, hackType, value);
-            violationFlags.put(uuid, 0);
+            data.violationCount = 0; // إعادة تعيين بعد التنبيه
         }
     }
 
     private void sendStaffAlert(Player player, String hackType, double value) {
         String alert = ChatColor.DARK_RED + "[SENTINEL-PRO] " +
-                ChatColor.RED + player.getName() + 
-                ChatColor.YELLOW + " flagged for " + ChatColor.WHITE + hackType + 
+                ChatColor.RED + player.getName() +
+                ChatColor.YELLOW + " flagged for " + ChatColor.WHITE + hackType +
                 ChatColor.GRAY + " (Val: " + String.format("%.2f", value) + ")";
 
         for (Player staff : Bukkit.getOnlinePlayers()) {
@@ -88,5 +104,11 @@ public class SentinelShieldPro implements Listener {
             }
         }
         Bukkit.getLogger().warning("[SENTINEL] " + player.getName() + " suspected for " + hackType);
+    }
+
+    // فئة داخلية لتتبع بيانات المخالفة لكل لاعب
+    private static class PlayerViolationData {
+        int violationCount = 0;
+        long lastViolationTime = 0;
     }
 }
